@@ -1,6 +1,6 @@
 # iNatSounds
 
-[[Paper](https://openreview.net/forum?id=QCY01LvyKm)] [[Data](https://github.com/visipedia/inat_sounds)] [[Model Weights](https://drive.google.com/drive/folders/1u8iqzP2WL2nkTMp9VZ5FCa3zveOrPj2X?usp=sharing)] 
+[[Paper](https://openreview.net/forum?id=QCY01LvyKm)] [[Data](https://github.com/visipedia/inat_sounds)] [[Website](https://cvl-umass.github.io/iNatSounds/)] [[Model Weights](https://drive.google.com/drive/folders/1u8iqzP2WL2nkTMp9VZ5FCa3zveOrPj2X?usp=sharing)] 
 
 ## Sample Commands
 
