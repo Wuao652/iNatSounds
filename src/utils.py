@@ -6,10 +6,6 @@ import json
 import matplotlib.pyplot as plt
 from sklearn.metrics import average_precision_score, precision_recall_curve, roc_auc_score
 
-with open("/home/mchasmai_umass_edu/sound_id/dataset_setup/taxa/class_id2taxa.json", "r") as f:
-    class_name2taxa = json.load(f)
-
-
 def metric_str2acc(m_str):
     m = m_str.replace(" ", "").split("\n")
     m = [l for l in m if l!= ""]
@@ -118,7 +114,7 @@ def add_lists(lst):
     return new_list
 
 class SingleLabelMetrics():
-    def __init__(self, num_classes, present_classes_mask, save_dir=None, multilabel=False):
+    def __init__(self, dataset_json_dir, num_classes, present_classes_mask, save_dir=None, multilabel=False):
         self.present_classes_mask = present_classes_mask
         self.present_classes_idx = [i for i in range(num_classes) if present_classes_mask[i]]
         self.present_classes_idx = torch.Tensor(self.present_classes_idx).to(torch.long)
@@ -147,9 +143,12 @@ class SingleLabelMetrics():
         self.sigmoid = torch.nn.Sigmoid()
         self.multilabel = multilabel
 
-        with open("/home/mchasmai_umass_edu/sound_id/inat_sound/class_name2idx_train.json", "r") as f:
-            self.class_name2id = json.load(f)
-            self.class_id2name = {v:k for k, v in self.class_name2id.items()}
+        dataset = read_json(os.path.join(dataset_json_dir, "test.json"))
+        self.class_id2taxa_list = {}
+        for cl_dict in dataset["categories"]:
+            self.class_id2taxa_list[cl_dict["id"]] = [
+                cl_dict[k] for k in self.taxa_levels
+            ]
 
         self.all_preds = []
         self.all_gts = []
@@ -245,8 +244,8 @@ class SingleLabelMetrics():
 
         # accuracies at different levels of taxonomy
         def class_id2taxa(class_id, i):
-            name = self.class_id2name[int(class_id)]
-            taxa = "_".join(list(class_name2taxa[name].values())[:i+1])
+            taxa_list = self.class_id2taxa_list[class_id]
+            taxa = "_".join(taxa_list[:i+1])
             return taxa
 
         # using average sound prediction for taxonomy-level scores

@@ -45,7 +45,7 @@ def run_loop(args, dataloader, model, mode="train", optimizer=None, use_cuda=Tru
     else:
         model.eval()
         output_dim = num_classes
-        metrics = utils.SingleLabelMetrics(output_dim, dataloader.present_classes_mask, save_dir, multilabel=args.multilabel)
+        metrics = utils.SingleLabelMetrics(args.json_dir, output_dim, dataloader.present_classes_mask, save_dir, multilabel=args.multilabel)
     augment = transforms.RandomErasing(p=1.0, scale=(0.1, 0.33))
 
     if use_cuda:
