@@ -6,6 +6,16 @@ import json
 import matplotlib.pyplot as plt
 from sklearn.metrics import average_precision_score, precision_recall_curve, roc_auc_score
 
+
+def write_json(data, path):
+    with open(path, "w") as f:
+        json.dump(data, f)
+
+def read_json(path):
+    with open(path, "r") as f:
+        data = json.load(f)
+    return data
+
 def metric_str2acc(m_str):
     m = m_str.replace(" ", "").split("\n")
     m = [l for l in m if l!= ""]
