@@ -28,19 +28,28 @@ def run_train(args):
         weights = torch.load(args.model_weight)
         model.load_state_dict(weights)
     if args.encoder_weight != "":
-        weights = torch.load(args.encoder_weight)
-        weights = {k:v for k, v in weights.items() if not ("fc" in k or "heads" in k)}
-        model.load_state_dict(weights, strict=False)
+        if args.model == "vit_base_patch16":
+            checkpoint = torch.load(args.encoder_weight, map_location='cpu')
+            weights = checkpoint["model"]
+            weights = {k: v for k, v in weights.items() if not k.startswith("head")}
+            model.load_state_dict(weights, strict=False)
+            print(f"loading weights from {args.encoder_weight} ... ")
+        else:
+            weights = torch.load(args.encoder_weight)
+            weights = {k:v for k, v in weights.items() if not ("fc" in k or "heads" in k)}
+            model.load_state_dict(weights, strict=False)
     model.train()
     if use_cuda:
         model = model.cuda()
 
-    geo_model = models.GeoModel(
-        geo_model_weights=args.geo_model_weights,
-        json_dir=args.json_dir,
-    )
-    if use_cuda:
-        geo_model = geo_model.cuda()
+    geo_model = None
+    if args.geo_model_weights != "":
+        geo_model = models.GeoModel(
+            geo_model_weights=args.geo_model_weights,
+            json_dir=args.json_dir,
+        )
+        if use_cuda:
+            geo_model = geo_model.cuda()
 
 
     if args.optim == "sgd":
@@ -156,38 +165,38 @@ def run_train(args):
     logging.info(test_metrics)
 
 
-    ### With test-time geo-filtering
-    ## Val set
-    logging.info("With test-time geo-filtering!")
-    val_loss, val_acc, val_metrics = train_eval.run_loop(
-        args, val_dataloader, model, 
-        mode="eval",
-        use_cuda=use_cuda,
-        geo_model=geo_model,
-        test_geo_mask=True,
-        # save_dir=os.path.join(pred_dir, "val", "epoch_{}".format(epoch))
-    )
-    logging.info(LOG_FMT.format(
-        best_epoch, "val", cur_lr, 
-        val_loss, 100*val_acc, 
-    ))
-    logging.info(val_metrics)
+    # ### With test-time geo-filtering
+    # ## Val set
+    # logging.info("With test-time geo-filtering!")
+    # val_loss, val_acc, val_metrics = train_eval.run_loop(
+    #     args, val_dataloader, model, 
+    #     mode="eval",
+    #     use_cuda=use_cuda,
+    #     geo_model=geo_model,
+    #     test_geo_mask=True,
+    #     # save_dir=os.path.join(pred_dir, "val", "epoch_{}".format(epoch))
+    # )
+    # logging.info(LOG_FMT.format(
+    #     best_epoch, "val", cur_lr, 
+    #     val_loss, 100*val_acc, 
+    # ))
+    # logging.info(val_metrics)
 
-    ## Test set
-    logging.info("With test-time geo-filtering!")
-    test_loss, test_acc, test_metrics = train_eval.run_loop(
-        args, test_dataloader, model, 
-        mode="eval",
-        use_cuda=use_cuda,
-        geo_model=geo_model,
-        test_geo_mask=True,
-        # save_dir=os.path.join(pred_dir, "test", "epoch_{}".format(epoch))
-    )
-    logging.info(LOG_FMT.format(
-        best_epoch, "test", cur_lr, 
-        test_loss, 100*test_acc, 
-    ))
-    logging.info(test_metrics)
+    # ## Test set
+    # logging.info("With test-time geo-filtering!")
+    # test_loss, test_acc, test_metrics = train_eval.run_loop(
+    #     args, test_dataloader, model, 
+    #     mode="eval",
+    #     use_cuda=use_cuda,
+    #     geo_model=geo_model,
+    #     test_geo_mask=True,
+    #     # save_dir=os.path.join(pred_dir, "test", "epoch_{}".format(epoch))
+    # )
+    # logging.info(LOG_FMT.format(
+    #     best_epoch, "test", cur_lr, 
+    #     test_loss, 100*test_acc, 
+    # ))
+    # logging.info(test_metrics)
 
 
 

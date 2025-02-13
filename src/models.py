@@ -5,6 +5,10 @@ import numpy as np
 import torch.nn.functional as F
 import json
 import os
+import src.models_vit as models_vit
+
+import timm
+from timm.models.vision_transformer import default_cfgs
 
 
 hidden_dim_dict = {
@@ -13,6 +17,7 @@ hidden_dim_dict = {
     "resnet101": 2048,
     "vit": 768,
     "mobilenet": 1280,
+    "vit_base_patch16": 768,
 }
 
 def get_model(model_name, output_dim, pretrained=True, get_last_dim=False):
@@ -32,6 +37,22 @@ def get_model(model_name, output_dim, pretrained=True, get_last_dim=False):
     elif model_name == "mobilenet":
         model = torchvision.models.mobilenet_v3_large(pretrained=pretrained)
         model.classifier[3] = nn.Linear(last_dim, output_dim) if output_dim is not None else nn.Identity()
+    elif model_name == "vit_base_patch16":
+        model = models_vit.vit_base_patch16(
+            num_classes=output_dim
+        )
+        if pretrained:  # load pretrained weight from imagenet
+            vit_b_default_cfg = default_cfgs["vit_base_patch16_224"]
+            state_dict = torch.hub.load_state_dict_from_url(vit_b_default_cfg['url'], map_location='cpu')
+            filtered_dict = {k: v for k, v in state_dict.items() if not k.startswith("head")}
+            model.load_state_dict(filtered_dict, strict=False)
+            print(f"loading weights from {vit_b_default_cfg['url']} ... ")      
+    elif model_name == "vit_large_patch16":
+        pass
+    elif model_name == "vit_huge_path14":
+        pass
+    else:
+        raise NotImplementedError
 
     if not get_last_dim:
         return model

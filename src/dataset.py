@@ -8,7 +8,8 @@ from PIL import Image
 import json
 import tqdm
 import torchvision
-from torchvision.transforms import v2
+# comment the following line, using torchvision=0.14.1
+# from torchvision.transforms import v2
 from torch.utils.data import default_collate
 
 
@@ -159,7 +160,7 @@ class InatJsonDataset(Dataset):
         img[..., start : start + interval, :] = 0
         return img
 
-    def time_masking(self, img, mask_len=15):
+    def time_masking(self, img, mask_len=50):
         time_len = img.shape[-1]
         start = np.random.randint(0, time_len - mask_len)
         interval = np.random.randint(0, mask_len)
