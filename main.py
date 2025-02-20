@@ -38,6 +38,20 @@ def run_train(args):
             weights = torch.load(args.encoder_weight)
             weights = {k:v for k, v in weights.items() if not ("fc" in k or "heads" in k)}
             model.load_state_dict(weights, strict=False)
+
+
+    if args.linear_prob and args.model == "vit_base_patch16":
+        # for linear prob only
+        # hack: revise model's head with BN
+        model.head = torch.nn.Sequential(torch.nn.BatchNorm1d(model.head.in_features, affine=False, eps=1e-6), model.head)
+        # freeze all but the head
+        for _, p in model.named_parameters():
+            p.requires_grad = False
+        for _, p in model.head.named_parameters():
+            p.requires_grad = True
+        print("Linear probing: only training the head")
+        logging.info("Linear probing: only training the head")
+
     model.train()
     if use_cuda:
         model = model.cuda()
