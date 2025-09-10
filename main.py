@@ -210,12 +210,15 @@ def run_eval(args):
     if use_cuda:
         model = model.cuda()
 
-    geo_model = models.GeoModel(
-        geo_model_weights=args.geo_model_weights,
-        json_dir=args.json_dir,
-    )
-    if use_cuda:
-        geo_model = geo_model.cuda()
+    
+    geo_model = None
+    if args.geo_model and args.geo_model_weights is not None:
+        geo_model = models.GeoModel(
+            geo_model_weights=args.geo_model_weights,
+            json_dir=args.json_dir,
+        )
+        if use_cuda:
+            geo_model = geo_model.cuda()
 
     loss_fn = torch.nn.CrossEntropyLoss()
 
@@ -252,40 +255,41 @@ def run_eval(args):
     ))
     logging.info(test_sound_metrics)
     print(test_sound_metrics)
-        
 
-    ## With test-time geo-filtering
-    logging.info("With test-time geo-filtering!")
-    val_loss, val_acc, val_sound_metrics = train_eval.run_loop(
-        args, val_dataloader, model, 
-        mode="eval",
-        use_cuda=use_cuda,
-        # save_dir=os.path.join(pred_dir, "geo_val"),
-        geo_model=geo_model,
-        test_geo_mask=True,
-    )
-    logging.info(LOG_FMT.format(
-        "val", 
-        val_loss, 100*val_acc, 
-    ))
-    logging.info(val_sound_metrics)
-    print(val_sound_metrics)
 
-    logging.info("With test-time geo-filtering!")
-    test_loss, test_acc, test_sound_metrics = train_eval.run_loop(
-        args, test_dataloader, model, 
-        mode="eval",
-        use_cuda=use_cuda,
-        # save_dir=os.path.join(pred_dir, "geo_test"),
-        geo_model=geo_model,
-        test_geo_mask=True,
-    )
-    logging.info(LOG_FMT.format(
-        "test", 
-        test_loss, 100*test_acc, 
-    ))
-    logging.info(test_sound_metrics)
-    print(test_sound_metrics)
+    if args.geo_model and args.geo_model_weights is not None:
+        ## With test-time geo-filtering
+        logging.info("With test-time geo-filtering!")
+        val_loss, val_acc, val_sound_metrics = train_eval.run_loop(
+            args, val_dataloader, model, 
+            mode="eval",
+            use_cuda=use_cuda,
+            # save_dir=os.path.join(pred_dir, "geo_val"),
+            geo_model=geo_model,
+            test_geo_mask=True,
+        )
+        logging.info(LOG_FMT.format(
+            "val", 
+            val_loss, 100*val_acc, 
+        ))
+        logging.info(val_sound_metrics)
+        print(val_sound_metrics)
+
+        logging.info("With test-time geo-filtering!")
+        test_loss, test_acc, test_sound_metrics = train_eval.run_loop(
+            args, test_dataloader, model, 
+            mode="eval",
+            use_cuda=use_cuda,
+            # save_dir=os.path.join(pred_dir, "geo_test"),
+            geo_model=geo_model,
+            test_geo_mask=True,
+        )
+        logging.info(LOG_FMT.format(
+            "test", 
+            test_loss, 100*test_acc, 
+        ))
+        logging.info(test_sound_metrics)
+        print(test_sound_metrics)
     
 
 if __name__=="__main__":

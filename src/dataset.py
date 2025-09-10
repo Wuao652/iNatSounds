@@ -8,6 +8,9 @@ from PIL import Image
 import json
 import tqdm
 import torchvision
+# Disable the beta warning
+torchvision.disable_beta_transforms_warning()
+
 from torchvision.transforms import v2
 from torch.utils.data import default_collate
 
@@ -172,14 +175,14 @@ class InatJsonDataset(Dataset):
 
 def get_dataloaders(args):
     standard_transforms = torchvision.transforms.Compose([
-        torchvision.transforms.Resize((224, 224)),
+        torchvision.transforms.Resize((224, 224), antialias=True),
         torchvision.transforms.Normalize(
             (0.6569, 0.6569, 0.6569), (0.1786, 0.1786, 0.1786)
         ),
     ])
     if hasattr(args, "noresize") and args.noresize:
         standard_transforms = torchvision.transforms.Compose([
-            torchvision.transforms.Resize((128, 512)),
+            torchvision.transforms.Resize((128, 512), antialias=True),
             torchvision.transforms.Normalize(
                 (0.6569, 0.6569, 0.6569), (0.1786, 0.1786, 0.1786)
             ),
