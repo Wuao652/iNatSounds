@@ -14,6 +14,10 @@ torchvision.disable_beta_transforms_warning()
 from torchvision.transforms import v2
 from torch.utils.data import default_collate
 
+# for debugging
+import ipdb
+import sys
+
 
 class CustomMixup():
     def __init__(self, num_classes, alpha=1.0, multilabel=False):
@@ -66,6 +70,10 @@ class InatJsonDataset(Dataset):
             }
             for a in dataset["annotations"]
         ]
+        # # num = bacth_size x 8 
+        # # for debugging
+        # self.datapoints = self.datapoints[:8*8]
+
         self.num_classes = len(list(self.class_name2idx.keys()))
 
             
@@ -187,6 +195,10 @@ def get_dataloaders(args):
                 (0.6569, 0.6569, 0.6569), (0.1786, 0.1786, 0.1786)
             ),
         ])
+
+    # set transforms to None for birdmae
+    standard_transforms = None if args.model == "birdmae" else standard_transforms
+
 
     train_transforms = standard_transforms    
     sound_aug = True if hasattr(args, "sound_aug") and args.sound_aug else False

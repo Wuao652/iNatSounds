@@ -9,6 +9,12 @@ import tqdm
 import os
 import copy
 
+
+# for debugging
+import sys
+import ipdb
+
+
 def run_train(args):
     weight_dir, plot_dir, pred_dir = utils.setup_logging(args, mode="train")
 
@@ -21,7 +27,15 @@ def run_train(args):
     logging.info("Number of classes: " + str(num_classes))
 
     output_dim = num_classes 
-    model = models.get_model(args.model, output_dim=output_dim, pretrained=args.pretrained)
+
+    model = models.get_model(
+        args.model,
+        output_dim=output_dim,
+        pretrained=args.pretrained,
+        get_last_dim=False,
+        args=args
+        )
+    
     # model = nn.DataParallel(model)
     assert args.model_weight == "" or args.encoder_weight == ""
     if args.model_weight != "":
@@ -35,12 +49,14 @@ def run_train(args):
     if use_cuda:
         model = model.cuda()
 
-    geo_model = models.GeoModel(
-        geo_model_weights=args.geo_model_weights,
-        json_dir=args.json_dir,
-    )
-    if use_cuda:
-        geo_model = geo_model.cuda()
+    geo_model = None
+    if args.geo_model and args.geo_model_weights is not None:
+        geo_model = models.GeoModel(
+            geo_model_weights=args.geo_model_weights,
+            json_dir=args.json_dir,
+        )
+        if use_cuda:
+            geo_model = geo_model.cuda()
 
 
     if args.optim == "sgd":
@@ -158,36 +174,37 @@ def run_train(args):
 
     ### With test-time geo-filtering
     ## Val set
-    logging.info("With test-time geo-filtering!")
-    val_loss, val_acc, val_metrics = train_eval.run_loop(
-        args, val_dataloader, model, 
-        mode="eval",
-        use_cuda=use_cuda,
-        geo_model=geo_model,
-        test_geo_mask=True,
-        # save_dir=os.path.join(pred_dir, "val", "epoch_{}".format(epoch))
-    )
-    logging.info(LOG_FMT.format(
-        best_epoch, "val", cur_lr, 
-        val_loss, 100*val_acc, 
-    ))
-    logging.info(val_metrics)
+    if args.geo_model and args.geo_model_weights is not None:
+        logging.info("With test-time geo-filtering!")
+        val_loss, val_acc, val_metrics = train_eval.run_loop(
+            args, val_dataloader, model, 
+            mode="eval",
+            use_cuda=use_cuda,
+            geo_model=geo_model,
+            test_geo_mask=True,
+            # save_dir=os.path.join(pred_dir, "val", "epoch_{}".format(epoch))
+        )
+        logging.info(LOG_FMT.format(
+            best_epoch, "val", cur_lr, 
+            val_loss, 100*val_acc, 
+        ))
+        logging.info(val_metrics)
 
-    ## Test set
-    logging.info("With test-time geo-filtering!")
-    test_loss, test_acc, test_metrics = train_eval.run_loop(
-        args, test_dataloader, model, 
-        mode="eval",
-        use_cuda=use_cuda,
-        geo_model=geo_model,
-        test_geo_mask=True,
-        # save_dir=os.path.join(pred_dir, "test", "epoch_{}".format(epoch))
-    )
-    logging.info(LOG_FMT.format(
-        best_epoch, "test", cur_lr, 
-        test_loss, 100*test_acc, 
-    ))
-    logging.info(test_metrics)
+        ## Test set
+        logging.info("With test-time geo-filtering!")
+        test_loss, test_acc, test_metrics = train_eval.run_loop(
+            args, test_dataloader, model, 
+            mode="eval",
+            use_cuda=use_cuda,
+            geo_model=geo_model,
+            test_geo_mask=True,
+            # save_dir=os.path.join(pred_dir, "test", "epoch_{}".format(epoch))
+        )
+        logging.info(LOG_FMT.format(
+            best_epoch, "test", cur_lr, 
+            test_loss, 100*test_acc, 
+        ))
+        logging.info(test_metrics)
 
 
 
@@ -198,10 +215,17 @@ def run_eval(args):
     _, val_dataloader, test_dataloader = dataset.get_dataloaders(args)
     num_classes = val_dataloader.num_classes
     output_dim = num_classes 
-    model = models.get_model(args.model, output_dim=output_dim, pretrained=args.pretrained)
+    model = models.get_model(
+        args.model,
+        output_dim=output_dim,
+        pretrained=args.pretrained,
+        get_last_dim=False,
+        args=args
+        )
     if args.model_weight != "":
         weights = torch.load(args.model_weight)
-        model.load_state_dict(weights)
+        loading_info = model.load_state_dict(weights)
+        print(loading_info)
     if args.encoder_weight != "":
         weights = torch.load(args.encoder_weight)
         model.load_state_dict(weights, strict=True)

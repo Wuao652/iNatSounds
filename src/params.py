@@ -5,7 +5,7 @@ def get_args():
     # Need changes
     parser.add_argument('--spectrogram_dir', type=str, default="")
     parser.add_argument('--json_dir', type=str, default="")
-    parser.add_argument('--geo_model_weights', type=str, default="")
+    parser.add_argument('--geo_model_weights', type=str, default=None)
     parser.add_argument('--log_dir', type=str, default="./logs")
 
     parser.add_argument('--seed', type=int, default=0)
@@ -29,5 +29,6 @@ def get_args():
     parser.add_argument('--geo_threshold', type=float, default=0.1)
     parser.add_argument('--no_masking', default=False, action="store_true",)
     parser.add_argument('--mean_teacher', default=False, action="store_true",)
+    parser.add_argument('--freeze_backbone', default=False, action="store_true", help="whether to freeze the backbone in BirdMAE")
     args = parser.parse_args()
     return args
