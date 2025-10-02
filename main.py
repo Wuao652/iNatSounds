@@ -36,6 +36,10 @@ def run_train(args):
         args=args
         )
     
+    for i, module in enumerate(model.backbone.blocks):
+        for name, param in module.named_parameters():
+            logging.info(f"Layer {i} - {name}: requires_grad={param.requires_grad}")
+
     # model = nn.DataParallel(model)
     assert args.model_weight == "" or args.encoder_weight == ""
     if args.model_weight != "":

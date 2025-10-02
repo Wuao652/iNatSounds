@@ -30,5 +30,6 @@ def get_args():
     parser.add_argument('--no_masking', default=False, action="store_true",)
     parser.add_argument('--mean_teacher', default=False, action="store_true",)
     parser.add_argument('--freeze_backbone', default=False, action="store_true", help="whether to freeze the backbone in BirdMAE")
+    parser.add_argument('--intermediate_layer', default=-1, type=int, help="How many layers to tune from backwards in BirdMAE, 0 means linear probing and 12 means full finetune")
     args = parser.parse_args()
     return args

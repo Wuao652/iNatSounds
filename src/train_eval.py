@@ -70,7 +70,7 @@ def run_loop(args, dataloader, model, mode="train", optimizer=None, use_cuda=Tru
         img, label, geo, img_name = batch
 
         # special handling for birdmae
-        if args.model == "birdmae":
+        if args.model in ["birdmae", "birdmae_intermediate"]:
             img = img[:, :1, :, :]   # B, 128, 512 
             img = img.flip(2)
             img = img.permute(0, 1, 3, 2)

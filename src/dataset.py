@@ -197,7 +197,7 @@ def get_dataloaders(args):
         ])
 
     # set transforms to None for birdmae
-    standard_transforms = None if args.model == "birdmae" else standard_transforms
+    standard_transforms = None if args.model in ["birdmae", "birdmae_intermediate"] else standard_transforms
 
 
     train_transforms = standard_transforms    

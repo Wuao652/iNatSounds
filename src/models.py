@@ -20,6 +20,7 @@ hidden_dim_dict = {
     "vit": 768,
     "mobilenet": 1280,
     "birdmae":768,
+    "birdmae_intermediate":768,
 }
 
 def get_model(model_name, output_dim, pretrained=True, get_last_dim=False, args=None):
@@ -46,7 +47,14 @@ def get_model(model_name, output_dim, pretrained=True, get_last_dim=False, args=
             output_dim=output_dim,
             freeze_backbone=args.freeze_backbone,        
         )
-
+    elif model_name == "birdmae_intermediate":
+        print("Using intermediate vit features ...")
+        model = BirdMAEIntermediate(
+            last_dim=last_dim,
+            output_dim=output_dim,
+            freeze_backbone=args.freeze_backbone,
+            intermediate_layer=args.intermediate_layer,
+        )
     if not get_last_dim:
         return model
     else:
@@ -164,6 +172,27 @@ class BirdMAEClassify(nn.Module):
         embedding = self.backbone(x)[0]  #  (B, 768)
         logits = self.head(embedding)    # （B, 5569)
         return logits
+
+
+class BirdMAEIntermediate(BirdMAEClassify):
+    def __init__(self, **kwargs):
+        super(BirdMAEIntermediate, self).__init__(**kwargs)
+        self.intermediate_layer = kwargs.get("intermediate_layer", -1)
+        print(f"Using intermediate layer {self.intermediate_layer} as features ...")
+        # ViT has 12 layers, [0, 11]
+        # Ideally, I would like to try embeddings from layer 0, 1, 2, 4, 8, 12
+        print("Before: ", len(self.backbone.blocks))
+        # self.backbone.blocks = self.backbone.blocks[:self.intermediate_layer]
+        num_blocks = len(self.backbone.blocks)
+        print("After: ", num_blocks)
+        # print("After popping, the backbone is: \n", self.backbone)
+
+        # intermediate_layer is the number of layers to tune    
+        for i in range(num_blocks - self.intermediate_layer):
+            # set requires_grad to False
+            for p in self.backbone.blocks[i].parameters():
+                p.requires_grad = False
+        
 
 
 if __name__ == "__main__":
